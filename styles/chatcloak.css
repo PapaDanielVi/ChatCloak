@@ -1,0 +1,234 @@
+/* ChatCloak — Core & Zero-Flicker Styles */
+
+:root {
+  --chatcloak-blur-amount: 8px;
+  --chatcloak-blackout-color: #0b0f19;
+  --chatcloak-accent: #14b8a6;
+}
+
+html.chatcloak-blur-light {
+  --chatcloak-blur-amount: 4px;
+}
+
+html.chatcloak-blur-medium {
+  --chatcloak-blur-amount: 9px;
+}
+
+html.chatcloak-blur-heavy {
+  --chatcloak-blur-amount: 16px;
+}
+
+/* ==========================================================================
+   Zero-Flicker Early Cloaking Rules (active at document_start)
+   ========================================================================== */
+
+html.chatcloak-booting[data-chatcloak-host="chatgpt"] nav a[href^="/c/"],
+html.chatcloak-booting[data-chatcloak-host="chatgpt"] nav a[href^="/g/"],
+html.chatcloak-booting[data-chatcloak-host="chatgpt"] nav a[href^="/project"],
+html.chatcloak-booting[data-chatcloak-host="chatgpt"] #history a,
+html.chatcloak-booting[data-chatcloak-host="chatgpt"] [data-testid="profile-button"],
+html.chatcloak-booting[data-chatcloak-host="chatgpt"] [data-testid="accounts-profile-button"],
+html.chatcloak-booting[data-chatcloak-host="chatgpt"]:not(:has([data-testid^="conversation-turn"])) main h1,
+html.chatcloak-booting[data-chatcloak-host="gemini"] bard-sidenav conversations-list,
+html.chatcloak-booting[data-chatcloak-host="gemini"] [data-test-id="all-conversations"],
+html.chatcloak-booting[data-chatcloak-host="gemini"] [data-test-id="pinned-conversations"],
+html.chatcloak-booting[data-chatcloak-host="gemini"] a[aria-label*="Google Account" i],
+html.chatcloak-booting[data-chatcloak-host="gemini"] [data-ogsr-up],
+html.chatcloak-booting[data-chatcloak-host="gemini"] location-footer,
+html.chatcloak-booting[data-chatcloak-host="gemini"] modular-greeting,
+html.chatcloak-booting[data-chatcloak-host="gemini"] bard-greeting,
+html.chatcloak-booting[data-chatcloak-host="claude"] nav a[href^="/chat/"],
+html.chatcloak-booting[data-chatcloak-host="claude"] nav a[href^="/project/"],
+html.chatcloak-booting[data-chatcloak-host="claude"] [data-testid="user-menu-button"],
+html.chatcloak-booting[data-chatcloak-host="claude"] [data-testid="chat-title-button"],
+html.chatcloak-booting[data-chatcloak-host="claude"]:not(:has([data-testid="user-message"], [data-testid="chat-message"])) main h1 {
+  filter: blur(var(--chatcloak-blur-amount)) !important;
+  user-select: none !important;
+}
+
+/* ==========================================================================
+   Active Category CSS Guards (prevents 1-frame flash on dynamic SPA mounts)
+   ========================================================================== */
+
+html.chatcloak-enabled.chatcloak-style-blur.chatcloak-cat-sidebar[data-chatcloak-host="chatgpt"] nav a[href^="/c/"],
+html.chatcloak-enabled.chatcloak-style-blur.chatcloak-cat-sidebar[data-chatcloak-host="chatgpt"] nav a[href^="/g/"],
+html.chatcloak-enabled.chatcloak-style-blur.chatcloak-cat-sidebar[data-chatcloak-host="chatgpt"] nav a[href^="/project"],
+html.chatcloak-enabled.chatcloak-style-blur.chatcloak-cat-sidebar[data-chatcloak-host="chatgpt"] #history a,
+html.chatcloak-enabled.chatcloak-style-blur.chatcloak-cat-sidebar[data-chatcloak-host="gemini"] bard-sidenav conversations-list,
+html.chatcloak-enabled.chatcloak-style-blur.chatcloak-cat-sidebar[data-chatcloak-host="gemini"] [data-test-id="all-conversations"],
+html.chatcloak-enabled.chatcloak-style-blur.chatcloak-cat-sidebar[data-chatcloak-host="gemini"] [data-test-id="pinned-conversations"],
+html.chatcloak-enabled.chatcloak-style-blur.chatcloak-cat-sidebar[data-chatcloak-host="gemini"] a[href^="/app/"],
+html.chatcloak-enabled.chatcloak-style-blur.chatcloak-cat-sidebar[data-chatcloak-host="gemini"] a[href^="/gem/"],
+html.chatcloak-enabled.chatcloak-style-blur.chatcloak-cat-sidebar[data-chatcloak-host="claude"] nav a[href^="/chat/"],
+html.chatcloak-enabled.chatcloak-style-blur.chatcloak-cat-sidebar[data-chatcloak-host="claude"] nav a[href^="/project/"],
+html.chatcloak-enabled.chatcloak-style-blur.chatcloak-cat-sidebar[data-chatcloak-host="claude"] [data-testid="chat-title-button"],
+html.chatcloak-enabled.chatcloak-style-blur.chatcloak-cat-profile[data-chatcloak-host="chatgpt"] [data-testid="profile-button"],
+html.chatcloak-enabled.chatcloak-style-blur.chatcloak-cat-profile[data-chatcloak-host="chatgpt"] [data-testid="accounts-profile-button"],
+html.chatcloak-enabled.chatcloak-style-blur.chatcloak-cat-profile[data-chatcloak-host="chatgpt"]:not(:has([data-testid^="conversation-turn"])) main h1:not([data-chatcloak-processed]),
+html.chatcloak-enabled.chatcloak-style-blur.chatcloak-cat-profile[data-chatcloak-host="gemini"] a[aria-label*="Google Account" i],
+html.chatcloak-enabled.chatcloak-style-blur.chatcloak-cat-profile[data-chatcloak-host="gemini"] [data-ogsr-up],
+html.chatcloak-enabled.chatcloak-style-blur.chatcloak-cat-profile[data-chatcloak-host="gemini"] modular-greeting:not([data-chatcloak-processed]),
+html.chatcloak-enabled.chatcloak-style-blur.chatcloak-cat-profile[data-chatcloak-host="gemini"] bard-greeting:not([data-chatcloak-processed]),
+html.chatcloak-enabled.chatcloak-style-blur.chatcloak-cat-profile[data-chatcloak-host="claude"] [data-testid="user-menu-button"],
+html.chatcloak-enabled.chatcloak-style-blur.chatcloak-cat-profile[data-chatcloak-host="claude"]:not(:has([data-testid="user-message"], [data-testid="chat-message"])) main h1:not([data-chatcloak-processed]),
+html.chatcloak-enabled.chatcloak-style-blur [data-chatcloak-cloaked] {
+  filter: blur(var(--chatcloak-blur-amount)) !important;
+  transition: filter 0.12s ease !important;
+  user-select: none !important;
+}
+
+/* ==========================================================================
+   Blackout Mode for UI Blocks & Categories
+   ========================================================================== */
+
+html.chatcloak-enabled.chatcloak-style-blackout [data-chatcloak-cloaked] {
+  background-color: var(--chatcloak-blackout-color) !important;
+  color: transparent !important;
+  border-color: var(--chatcloak-blackout-color) !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  user-select: none !important;
+}
+
+html.chatcloak-enabled.chatcloak-style-blackout [data-chatcloak-cloaked] * {
+  color: transparent !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  text-shadow: none !important;
+}
+
+html.chatcloak-enabled.chatcloak-style-blackout [data-chatcloak-cloaked] img,
+html.chatcloak-enabled.chatcloak-style-blackout [data-chatcloak-cloaked] svg,
+html.chatcloak-enabled.chatcloak-style-blackout [data-chatcloak-cloaked] video,
+html.chatcloak-enabled.chatcloak-style-blackout [data-chatcloak-cloaked] canvas,
+html.chatcloak-enabled.chatcloak-style-blackout img[data-chatcloak-cloaked],
+html.chatcloak-enabled.chatcloak-style-blackout video[data-chatcloak-cloaked],
+html.chatcloak-enabled.chatcloak-style-blackout canvas[data-chatcloak-cloaked] {
+  filter: brightness(0) !important;
+}
+
+/* ==========================================================================
+   Inline PII & Keyword Text Redaction Spans
+   ========================================================================== */
+
+[data-chatcloak-redacted="true"] {
+  display: inline !important;
+  border-radius: 4px !important;
+  padding: 0 2px !important;
+  user-select: none !important;
+  transition: filter 0.12s ease, background-color 0.12s ease, color 0.12s ease !important;
+}
+
+html.chatcloak-enabled.chatcloak-style-blur [data-chatcloak-redacted="true"] {
+  filter: blur(var(--chatcloak-blur-amount)) !important;
+}
+
+html.chatcloak-enabled.chatcloak-style-blackout [data-chatcloak-redacted="true"] {
+  background-color: var(--chatcloak-blackout-color) !important;
+  color: transparent !important;
+  text-shadow: none !important;
+}
+
+/* ==========================================================================
+   Peek Mode (ONLY when Peek Mode is ON AND Alt key is actively held)
+   ========================================================================== */
+
+html.chatcloak-enabled.chatcloak-peek-enabled.chatcloak-alt-held [data-chatcloak-cloaked]:hover,
+html.chatcloak-enabled.chatcloak-peek-enabled.chatcloak-alt-held [data-chatcloak-redacted="true"]:hover {
+  filter: none !important;
+  background-color: transparent !important;
+  color: inherit !important;
+}
+
+html.chatcloak-enabled.chatcloak-peek-enabled.chatcloak-alt-held [data-chatcloak-cloaked]:hover * {
+  color: inherit !important;
+  filter: none !important;
+}
+
+html.chatcloak-enabled.chatcloak-peek-enabled.chatcloak-alt-held [data-chatcloak-cloaked]:hover img,
+html.chatcloak-enabled.chatcloak-peek-enabled.chatcloak-alt-held [data-chatcloak-cloaked]:hover svg,
+html.chatcloak-enabled.chatcloak-peek-enabled.chatcloak-alt-held [data-chatcloak-cloaked]:hover video,
+html.chatcloak-enabled.chatcloak-peek-enabled.chatcloak-alt-held [data-chatcloak-cloaked]:hover canvas {
+  filter: none !important;
+}
+
+/* ==========================================================================
+   Interactive Click-to-Cloak Element Picker Overlay
+   ========================================================================== */
+
+#chatcloak-picker-highlight {
+  position: fixed !important;
+  z-index: 2147483646 !important;
+  pointer-events: none !important;
+  border: 2px solid #14b8a6 !important;
+  background: rgba(20, 184, 166, 0.16) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.6), 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+  transition: top 0.05s ease, left 0.05s ease, width 0.05s ease, height 0.05s ease !important;
+  display: none;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+#chatcloak-picker-hud {
+  all: initial;
+  position: fixed !important;
+  bottom: 20px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 2147483647 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 10px 16px !important;
+  border-radius: 9999px !important;
+  background: rgba(15, 23, 42, 0.96) !important;
+  border: 1px solid rgba(45, 212, 191, 0.45) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.48) !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-size: 13px !important;
+  line-height: 1.3 !important;
+  color: #f8fafc !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+#chatcloak-picker-hud .chatcloak-hud-dot {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: #2dd4bf !important;
+  box-shadow: 0 0 8px #2dd4bf !important;
+  flex-shrink: 0 !important;
+}
+
+#chatcloak-picker-hud .chatcloak-hud-text {
+  color: #e2e8f0 !important;
+  white-space: nowrap !important;
+}
+
+#chatcloak-picker-hud .chatcloak-hud-count {
+  color: #2dd4bf !important;
+  font-weight: 600 !important;
+}
+
+#chatcloak-picker-hud .chatcloak-hud-btn {
+  all: unset;
+  cursor: pointer !important;
+  padding: 4px 10px !important;
+  border-radius: 9999px !important;
+  background: #0d9488 !important;
+  color: #ffffff !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  transition: background-color 0.15s ease !important;
+}
+
+#chatcloak-picker-hud .chatcloak-hud-btn:hover {
+  background: #14b8a6 !important;
+}
+
+body.chatcloak-picking,
+body.chatcloak-picking * {
+  cursor: crosshair !important;
+}

@@ -1,0 +1,64 @@
+{
+  "manifest_version": 3,
+  "name": "ChatCloak — Hide & Blur AI Chats for Screen Sharing",
+  "short_name": "ChatCloak",
+  "version": "1.0.0",
+  "description": "Hide, blur, or redact sensitive user info, chat history, profile badges, and PII on AI chat web apps while screen sharing.",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://chatgpt.com/*",
+    "https://gemini.google.com/*",
+    "https://claude.ai/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "ChatCloak (Alt+Shift+P)",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "commands": {
+    "toggle-chatcloak": {
+      "suggested_key": {
+        "default": "Alt+Shift+P",
+        "mac": "Alt+Shift+P"
+      },
+      "description": "Toggle ChatCloak privacy protection ON or OFF"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://gemini.google.com/*",
+        "https://claude.ai/*"
+      ],
+      "css": [
+        "styles/chatcloak.css"
+      ],
+      "js": [
+        "content/patterns.js",
+        "content/adapters/chatgpt.js",
+        "content/adapters/gemini.js",
+        "content/adapters/claude.js",
+        "content/redactor.js",
+        "content/picker.js",
+        "content/main.js"
+      ],
+      "run_at": "document_start"
+    }
+  ]
+}

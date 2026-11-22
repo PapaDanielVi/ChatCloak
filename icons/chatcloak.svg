@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#111827" />
+    </linearGradient>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2dd4bf" />
+      <stop offset="100%" stop-color="#0d9488" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="url(#bgGrad)" stroke="#1e293b" stroke-width="3" />
+  <path
+    d="M64 20 L100 34 V62 C100 84.5 84.8 101.6 64 108 C43.2 101.6 28 84.5 28 62 V34 Z"
+    fill="none"
+    stroke="url(#shieldGrad)"
+    stroke-width="7"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M42 64 C48 53 55.5 48 64 48 C72.5 48 80 53 86 64 C80 75 72.5 80 64 80 C55.5 80 48 75 42 64 Z"
+    fill="none"
+    stroke="#e2e8f0"
+    stroke-width="5.5"
+    stroke-linejoin="round"
+  />
+  <circle cx="64" cy="64" r="7" fill="#2dd4bf" />
+  <line
+    x1="43"
+    y1="83"
+    x2="85"
+    y2="45"
+    stroke="#0f172a"
+    stroke-width="10"
+    stroke-linecap="round"
+  />
+  <line
+    x1="43"
+    y1="83"
+    x2="85"
+    y2="45"
+    stroke="#2dd4bf"
+    stroke-width="5.5"
+    stroke-linecap="round"
+  />
+</svg>

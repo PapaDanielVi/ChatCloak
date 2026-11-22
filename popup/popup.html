@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChatCloak</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            <path d="M9.5 9.5a3.5 3.5 0 0 1 5 5" />
+            <path d="M6.5 17.5l11-11" />
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>ChatCloak</h1>
+          <span id="status-pill" class="status-pill status-on">Active</span>
+        </div>
+      </div>
+
+      <label class="master-switch" title="Toggle ChatCloak (Alt+Shift+P)">
+        <input id="master-toggle" type="checkbox" checked />
+        <span class="master-slider"></span>
+      </label>
+    </header>
+
+    <section class="meta-bar">
+      <span id="site-badge" class="site-badge">Checking tab...</span>
+      <span class="shortcut-hint">Panic: <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd></span>
+    </section>
+
+    <section class="actions-grid">
+      <button id="pick-btn" type="button" class="btn btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" />
+          <line x1="12" y1="3" x2="12" y2="7" />
+          <line x1="12" y1="17" x2="12" y2="21" />
+          <line x1="3" y1="12" x2="7" y2="12" />
+          <line x1="17" y1="12" x2="21" y2="12" />
+        </svg>
+        <span>Pick Element to Hide</span>
+      </button>
+
+      <button id="clear-manual-btn" type="button" class="btn btn-secondary" disabled>
+        <span>Clear Manual (<span id="manual-count">0</span>)</span>
+      </button>
+    </section>
+
+    <section class="card">
+      <div class="control-row">
+        <span class="control-label">Redaction Style</span>
+        <div class="segmented" role="group" aria-label="Redaction style">
+          <button type="button" class="seg-btn active" data-style="blur">Blur</button>
+          <button type="button" class="seg-btn" data-style="blackout">Blackout</button>
+        </div>
+      </div>
+
+      <div id="intensity-row" class="control-row">
+        <span class="control-label">Blur Strength</span>
+        <div class="segmented" role="group" aria-label="Blur strength">
+          <button type="button" class="seg-btn" data-intensity="light">Light</button>
+          <button type="button" class="seg-btn active" data-intensity="medium">Medium</button>
+          <button type="button" class="seg-btn" data-intensity="heavy">Heavy</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">Protection Rules</h2>
+
+      <label class="toggle-row">
+        <div class="toggle-info">
+          <span class="toggle-name">Sidebar &amp; History</span>
+          <span class="toggle-desc">Chats, folders, projects, GPTs &amp; Gems</span>
+        </div>
+        <span class="switch">
+          <input id="cat-sidebar" type="checkbox" checked />
+          <span class="slider"></span>
+        </span>
+      </label>
+
+      <label class="toggle-row">
+        <div class="toggle-info">
+          <span class="toggle-name">Profile &amp; Account</span>
+          <span class="toggle-desc">Avatar, name, email, workspace &amp; plan</span>
+        </div>
+        <span class="switch">
+          <input id="cat-profile" type="checkbox" checked />
+          <span class="slider"></span>
+        </span>
+      </label>
+
+      <label class="toggle-row">
+        <div class="toggle-info">
+          <span class="toggle-name">Uploaded Media</span>
+          <span class="toggle-desc">Images &amp; file thumbnails in thread</span>
+        </div>
+        <span class="switch">
+          <input id="cat-media" type="checkbox" />
+          <span class="slider"></span>
+        </span>
+      </label>
+
+      <label class="toggle-row">
+        <div class="toggle-info">
+          <span class="toggle-name">Auto-Redact PII</span>
+          <span class="toggle-desc">Emails, phones, IPs, API keys, cards</span>
+        </div>
+        <span class="switch">
+          <input id="cat-pii" type="checkbox" checked />
+          <span class="slider"></span>
+        </span>
+      </label>
+
+      <label class="toggle-row">
+        <div class="toggle-info">
+          <span class="toggle-name">Peek Mode</span>
+          <span class="toggle-desc">Hold Alt + Hover to reveal (off by default)</span>
+        </div>
+        <span class="switch">
+          <input id="peek-mode" type="checkbox" />
+          <span class="slider"></span>
+        </span>
+      </label>
+    </section>
+
+    <section class="card">
+      <div class="keywords-header">
+        <h2 class="section-title">Custom Keywords &amp; Phrases</h2>
+        <label class="ci-toggle" title="Ignore letter casing when matching keywords">
+          <input id="case-insensitive" type="checkbox" checked />
+          <span>Case-insensitive</span>
+        </label>
+      </div>
+
+      <form id="keyword-form" class="keyword-form">
+        <input
+          id="keyword-input"
+          type="text"
+          placeholder="Name, company, codename..."
+          autocomplete="off"
+          maxlength="80"
+        />
+        <button type="submit" class="btn btn-add">Add</button>
+      </form>
+
+      <div id="keyword-chips" class="keyword-chips"></div>
+    </section>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
