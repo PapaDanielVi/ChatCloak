@@ -46,7 +46,7 @@ ChatCloak is a Chrome extension (Manifest V3) built for live demos, pair program
 
 ### Option 1: Download Release Zip
 
-1. Download `chatcloak-v1.0.0.zip` from the [latest GitHub Release](https://github.com/PapaDanielVi/ChatCloak/releases/latest) and extract it.
+1. Download `chatcloak-v1.0.1.zip` from the [latest GitHub Release](https://github.com/PapaDanielVi/ChatCloak/releases/latest) and extract it.
 2. Open `chrome://extensions` in Chrome.
 3. Enable **Developer mode** in the top-right corner.
 4. Click **Load unpacked** and select the extracted folder.
