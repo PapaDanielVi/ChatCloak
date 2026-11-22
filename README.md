@@ -11,6 +11,17 @@
 
 ChatCloak is a Chrome extension (Manifest V3) built for live demos, pair programming, calls, and screen recordings. It runs strictly on your device with zero network requests, zero telemetry, and minimal permissions (`storage` and `activeTab`).
 
+## Screenshots
+
+| ChatGPT (Start Page & Sidebar Cloaked) | Google Gemini (History & Account Cloaked) |
+| :---: | :---: |
+| ![ChatCloak on ChatGPT](screenshots/chatgpt.png) | ![ChatCloak on Google Gemini](screenshots/gemini.png) |
+
+<div align="center">
+  <p><strong>Extension Popup</strong></p>
+  <img src="screenshots/popup.png" alt="ChatCloak Popup UI" width="320" />
+</div>
+
 ## Supported Sites
 
 - ChatGPT (`https://chatgpt.com/*`)
