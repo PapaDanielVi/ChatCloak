@@ -3,6 +3,7 @@
   <h1>ChatCloak</h1>
   <p>Hide, blur, or blackout sensitive info on ChatGPT, Google Gemini, and Claude while screen sharing or recording.</p>
   <p>
+    <a href="https://github.com/PapaDanielVi/ChatCloak/releases/latest"><img src="https://img.shields.io/github/v/release/PapaDanielVi/ChatCloak?color=0d9488" alt="Latest Release" /></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-0d9488.svg" alt="MIT License" /></a>
     <img src="https://img.shields.io/badge/manifest-v3-1e293b.svg" alt="Chrome Manifest V3" />
     <img src="https://img.shields.io/badge/privacy-100%25%20local-0d9488.svg" alt="100% Local" />
@@ -41,7 +42,17 @@ ChatCloak is a Chrome extension (Manifest V3) built for live demos, pair program
 - **Click-to-cloak element picker:** Highlight and click any message, code block, image, or UI block to hide it for the current session. Press `Esc` to exit picker mode.
 - **Peek Mode (off by default):** When enabled, holding `Alt` and hovering over a cloaked item temporarily reveals it.
 
-## Install from Source
+## Install
+
+### Option 1: Download Release Zip
+
+1. Download `chatcloak-v1.0.0.zip` from the [latest GitHub Release](https://github.com/PapaDanielVi/ChatCloak/releases/latest) and extract it.
+2. Open `chrome://extensions` in Chrome.
+3. Enable **Developer mode** in the top-right corner.
+4. Click **Load unpacked** and select the extracted folder.
+5. Pin ChatCloak to your toolbar. A teal `ON` badge indicates protection is active.
+
+### Option 2: Install from Source
 
 1. Clone the repository:
    ```bash
@@ -52,10 +63,7 @@ ChatCloak is a Chrome extension (Manifest V3) built for live demos, pair program
    ```bash
    node icons/generate-icons.js
    ```
-3. Open `chrome://extensions` in Chrome.
-4. Enable **Developer mode** in the top-right corner.
-5. Click **Load unpacked** and select the `ChatCloak` directory.
-6. Pin ChatCloak to your toolbar. A teal `ON` badge indicates protection is active.
+3. Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and select the `ChatCloak` directory.
 
 ## Architecture
 
