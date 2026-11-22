@@ -1,15 +1,16 @@
 (() => {
   'use strict';
 
-  window.ChatCloakAdapters = window.ChatCloakAdapters || [];
+  const BaseAdapter = window.ChatCloakBaseAdapter;
 
-  const chatgptAdapter = {
-    id: 'chatgpt',
-    label: 'ChatGPT',
-
-    matches(hostname) {
-      return hostname === 'chatgpt.com' || hostname.endsWith('.chatgpt.com');
-    },
+  class ChatGptAdapter extends BaseAdapter {
+    constructor() {
+      super({
+        id: 'chatgpt',
+        displayName: 'ChatGPT',
+        hostPatterns: ['chatgpt.com', '*.chatgpt.com']
+      });
+    }
 
     getSidebarSelectors() {
       return [
@@ -29,7 +30,7 @@
         '[data-testid="workspace-switcher"]',
         '[data-testid="conversation-header"]'
       ];
-    },
+    }
 
     getProfileSelectors() {
       return [
@@ -45,7 +46,7 @@
         'aside button:has(img[alt])',
         'header button:has(img[alt])'
       ];
-    },
+    }
 
     getMediaSelectors() {
       return [
@@ -57,7 +58,7 @@
         'main [data-testid="file-tile"]',
         'main [data-testid*="attachment"]'
       ];
-    },
+    }
 
     getMessageContainerSelectors() {
       return [
@@ -67,7 +68,7 @@
         'main article'
       ];
     }
-  };
+  }
 
-  window.ChatCloakAdapters.push(chatgptAdapter);
+  window.ChatCloakAdapters.push(new ChatGptAdapter());
 })();

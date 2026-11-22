@@ -1,15 +1,16 @@
 (() => {
   'use strict';
 
-  window.ChatCloakAdapters = window.ChatCloakAdapters || [];
+  const BaseAdapter = window.ChatCloakBaseAdapter;
 
-  const claudeAdapter = {
-    id: 'claude',
-    label: 'Claude',
-
-    matches(hostname) {
-      return hostname === 'claude.ai' || hostname.endsWith('.claude.ai');
-    },
+  class ClaudeAdapter extends BaseAdapter {
+    constructor() {
+      super({
+        id: 'claude',
+        displayName: 'Claude',
+        hostPatterns: ['claude.ai', '*.claude.ai']
+      });
+    }
 
     getSidebarSelectors() {
       return [
@@ -26,7 +27,7 @@
         '[data-testid="workspace-switcher"]',
         '[data-testid="chat-title-button"]'
       ];
-    },
+    }
 
     getProfileSelectors() {
       return [
@@ -41,7 +42,7 @@
         'nav button[aria-haspopup="menu"]',
         'aside button[aria-haspopup="menu"]'
       ];
-    },
+    }
 
     getMediaSelectors() {
       return [
@@ -54,7 +55,7 @@
         'main [data-testid*="attachment"]',
         'main [data-testid*="file-preview"]'
       ];
-    },
+    }
 
     getMessageContainerSelectors() {
       return [
@@ -67,7 +68,7 @@
         'main [data-test-render-count]'
       ];
     }
-  };
+  }
 
-  window.ChatCloakAdapters.push(claudeAdapter);
+  window.ChatCloakAdapters.push(new ClaudeAdapter());
 })();

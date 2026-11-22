@@ -23,7 +23,7 @@
         </div>
       </div>
 
-      <label class="master-switch" title="Toggle ChatCloak (Alt+Shift+P)">
+      <label class="master-switch" title="Toggle ChatCloak globally (Alt+Shift+P)">
         <input id="master-toggle" type="checkbox" checked />
         <span class="master-slider"></span>
       </label>
@@ -32,6 +32,19 @@
     <section class="meta-bar">
       <span id="site-badge" class="site-badge">Checking tab...</span>
       <span class="shortcut-hint">Panic: <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd></span>
+    </section>
+
+    <section id="site-toggle-card" class="card site-toggle-card hidden">
+      <label class="toggle-row">
+        <div class="toggle-info">
+          <span id="site-toggle-name" class="toggle-name">Enable on this site</span>
+          <span id="site-toggle-desc" class="toggle-desc">Keep ChatCloak active on this platform</span>
+        </div>
+        <span class="switch">
+          <input id="site-toggle" type="checkbox" checked />
+          <span class="slider"></span>
+        </span>
+      </label>
     </section>
 
     <section class="actions-grid">
@@ -151,8 +164,17 @@
 
       <div id="keyword-chips" class="keyword-chips"></div>
     </section>
+
+    <details class="card sites-details">
+      <summary class="sites-summary">
+        <span class="section-title">Supported Platforms</span>
+        <span id="sites-summary-count" class="sites-count">13/13</span>
+      </summary>
+      <div id="supported-sites-list" class="sites-list"></div>
+    </details>
   </div>
 
+  <script src="../shared/sites.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

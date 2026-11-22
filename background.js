@@ -1,5 +1,7 @@
 'use strict';
 
+importScripts('shared/sites.js');
+
 const DEFAULT_SETTINGS = {
   enabled: true,
   style: 'blur',
@@ -12,7 +14,8 @@ const DEFAULT_SETTINGS = {
   },
   peekMode: false,
   caseInsensitive: true,
-  customKeywords: []
+  customKeywords: [],
+  siteSettings: globalThis.ChatCloakSites.createDefaultSiteSettings()
 };
 
 const BADGE_BG_COLOR = '#0d9488';
@@ -51,7 +54,8 @@ function mergeSettings(stored) {
         : DEFAULT_SETTINGS.caseInsensitive,
     customKeywords: Array.isArray(s.customKeywords)
       ? s.customKeywords.filter((k) => typeof k === 'string' && k.trim().length > 0)
-      : []
+      : [],
+    siteSettings: globalThis.ChatCloakSites.mergeSiteSettings(s.siteSettings)
   };
 }
 
@@ -120,5 +124,4 @@ chrome.commands.onCommand.addListener(async (command) => {
   }
 });
 
-// Keep badge aligned whenever service worker wakes up.
 syncBadgeFromStorage();

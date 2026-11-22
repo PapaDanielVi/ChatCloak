@@ -1,5 +1,7 @@
 'use strict';
 
+const Sites = globalThis.ChatCloakSites;
+
 const DEFAULT_SETTINGS = {
   enabled: true,
   style: 'blur',
@@ -12,13 +14,18 @@ const DEFAULT_SETTINGS = {
   },
   peekMode: false,
   caseInsensitive: true,
-  customKeywords: []
+  customKeywords: [],
+  siteSettings: Sites.createDefaultSiteSettings()
 };
 
 const els = {
   masterToggle: document.getElementById('master-toggle'),
   statusPill: document.getElementById('status-pill'),
   siteBadge: document.getElementById('site-badge'),
+  siteToggleCard: document.getElementById('site-toggle-card'),
+  siteToggle: document.getElementById('site-toggle'),
+  siteToggleName: document.getElementById('site-toggle-name'),
+  siteToggleDesc: document.getElementById('site-toggle-desc'),
   pickBtn: document.getElementById('pick-btn'),
   clearManualBtn: document.getElementById('clear-manual-btn'),
   manualCount: document.getElementById('manual-count'),
@@ -33,11 +40,14 @@ const els = {
   caseInsensitive: document.getElementById('case-insensitive'),
   keywordForm: document.getElementById('keyword-form'),
   keywordInput: document.getElementById('keyword-input'),
-  keywordChips: document.getElementById('keyword-chips')
+  keywordChips: document.getElementById('keyword-chips'),
+  sitesSummaryCount: document.getElementById('sites-summary-count'),
+  supportedSitesList: document.getElementById('supported-sites-list')
 };
 
 let currentSettings = structuredClone(DEFAULT_SETTINGS);
 let activeTabId = null;
+let activeTabSite = null; // { siteId, displayName } when current tab matches a supported site
 
 function mergeSettings(raw) {
   const s = raw || {};
@@ -72,8 +82,42 @@ function mergeSettings(raw) {
         : DEFAULT_SETTINGS.caseInsensitive,
     customKeywords: Array.isArray(s.customKeywords)
       ? s.customKeywords.filter((k) => typeof k === 'string' && k.trim().length > 0)
-      : []
+      : [],
+    siteSettings: Sites.mergeSiteSettings(s.siteSettings)
   };
+}
+
+function renderStatusHeader(settings) {
+  els.masterToggle.checked = settings.enabled;
+
+  if (activeTabSite) {
+    const siteOn = settings.siteSettings[activeTabSite.siteId] !== false;
+    if (!settings.enabled) {
+      els.statusPill.textContent = `Paused on ${activeTabSite.displayName}`;
+      els.statusPill.classList.remove('status-on');
+      els.statusPill.classList.add('status-off');
+    } else if (!siteOn) {
+      els.statusPill.textContent = `Off on ${activeTabSite.displayName}`;
+      els.statusPill.classList.remove('status-on');
+      els.statusPill.classList.add('status-off');
+    } else {
+      els.statusPill.textContent = `Active on ${activeTabSite.displayName}`;
+      els.statusPill.classList.add('status-on');
+      els.statusPill.classList.remove('status-off');
+    }
+
+    els.siteToggleCard.classList.remove('hidden');
+    els.siteToggle.checked = siteOn;
+    els.siteToggleName.textContent = `Enable on ${activeTabSite.displayName}`;
+    els.siteToggleDesc.textContent = siteOn
+      ? 'Cloaking active when ChatCloak is on'
+      : 'Exempted from global cloaking';
+  } else {
+    els.statusPill.textContent = settings.enabled ? 'Unsupported page' : 'Paused';
+    els.statusPill.classList.remove('status-on');
+    els.statusPill.classList.add('status-off');
+    els.siteToggleCard.classList.add('hidden');
+  }
 }
 
 function renderKeywords(keywords) {
@@ -109,11 +153,38 @@ function renderKeywords(keywords) {
   }
 }
 
+function renderSupportedSites(siteSettings) {
+  els.supportedSitesList.textContent = '';
+  let enabledCount = 0;
+
+  for (const site of Sites.SITE_DEFINITIONS) {
+    const checked = siteSettings[site.id] !== false;
+    if (checked) enabledCount += 1;
+
+    const row = document.createElement('label');
+    row.className = 'site-item';
+    row.title = site.hostPatterns.join(', ');
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = checked;
+    checkbox.addEventListener('change', () => {
+      saveSiteSetting(site.id, checkbox.checked);
+    });
+
+    const name = document.createElement('span');
+    name.textContent = site.displayName;
+
+    row.appendChild(checkbox);
+    row.appendChild(name);
+    els.supportedSitesList.appendChild(row);
+  }
+
+  els.sitesSummaryCount.textContent = `${enabledCount}/${Sites.SITE_DEFINITIONS.length}`;
+}
+
 function renderSettings(settings) {
-  els.masterToggle.checked = settings.enabled;
-  els.statusPill.textContent = settings.enabled ? 'Active' : 'Paused';
-  els.statusPill.classList.toggle('status-on', settings.enabled);
-  els.statusPill.classList.toggle('status-off', !settings.enabled);
+  renderStatusHeader(settings);
 
   for (const btn of els.styleButtons) {
     btn.classList.toggle('active', btn.dataset.style === settings.style);
@@ -132,6 +203,7 @@ function renderSettings(settings) {
   els.caseInsensitive.checked = settings.caseInsensitive;
 
   renderKeywords(settings.customKeywords);
+  renderSupportedSites(settings.siteSettings);
 }
 
 async function savePartial(patch) {
@@ -150,6 +222,18 @@ async function saveCategory(key, value) {
   });
   renderSettings(currentSettings);
   await chrome.storage.local.set({ categories: currentSettings.categories });
+}
+
+async function saveSiteSetting(siteId, enabled) {
+  currentSettings = mergeSettings({
+    ...currentSettings,
+    siteSettings: {
+      ...currentSettings.siteSettings,
+      [siteId]: enabled
+    }
+  });
+  renderSettings(currentSettings);
+  await chrome.storage.local.set({ siteSettings: currentSettings.siteSettings });
 }
 
 async function addKeyword(raw) {
@@ -175,11 +259,13 @@ async function removeKeyword(target) {
 }
 
 function setUnsupportedTabState() {
-  els.siteBadge.textContent = 'Open ChatGPT, Gemini, or Claude';
+  activeTabSite = null;
+  els.siteBadge.textContent = 'Unsupported page';
   els.siteBadge.classList.remove('supported');
   els.pickBtn.disabled = true;
   els.clearManualBtn.disabled = true;
   els.manualCount.textContent = '0';
+  renderStatusHeader(currentSettings);
 }
 
 async function queryActiveTabState() {
@@ -198,13 +284,18 @@ async function queryActiveTabState() {
       return;
     }
 
-    els.siteBadge.textContent = `Connected: ${response.label}`;
+    activeTabSite = {
+      siteId: response.siteId || response.host,
+      displayName: response.displayName || response.label
+    };
+    els.siteBadge.textContent = `Connected: ${activeTabSite.displayName}`;
     els.siteBadge.classList.add('supported');
     els.pickBtn.disabled = false;
 
     const count = Number(response.manualCount) || 0;
     els.manualCount.textContent = String(count);
     els.clearManualBtn.disabled = count === 0;
+    renderStatusHeader(currentSettings);
   } catch (_) {
     setUnsupportedTabState();
   }
@@ -213,6 +304,11 @@ async function queryActiveTabState() {
 function bindEvents() {
   els.masterToggle.addEventListener('change', () => {
     savePartial({ enabled: els.masterToggle.checked });
+  });
+
+  els.siteToggle.addEventListener('change', () => {
+    if (!activeTabSite) return;
+    saveSiteSetting(activeTabSite.siteId, els.siteToggle.checked);
   });
 
   for (const btn of els.styleButtons) {

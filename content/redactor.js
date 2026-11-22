@@ -4,6 +4,54 @@
   const FORBIDDEN_TAG_SELECTOR =
     'textarea, input, select, option, script, style, noscript, svg, math, canvas, template, [contenteditable="true"], [contenteditable=""], [data-chatcloak-ignore="true"], [data-chatcloak-redacted="true"]';
 
+  const GREETING_CONTAINER_SELECTOR =
+    'h1, h2, [role="heading"], [data-testid*="greeting" i], [data-test-id*="greeting" i], modular-greeting, bard-greeting';
+
+  const SHADOW_CSS = `
+    :host-context(html.chatcloak-enabled.chatcloak-style-blur) [data-chatcloak-cloaked],
+    :host-context(html.chatcloak-enabled.chatcloak-style-blur) [data-chatcloak-redacted="true"] {
+      filter: blur(var(--chatcloak-blur-amount, 9px)) !important;
+      transition: filter 0.12s ease !important;
+      user-select: none !important;
+    }
+    :host-context(html.chatcloak-enabled.chatcloak-style-blackout) [data-chatcloak-cloaked],
+    :host-context(html.chatcloak-enabled.chatcloak-style-blackout) [data-chatcloak-redacted="true"] {
+      background-color: var(--chatcloak-blackout-color, #0b0f19) !important;
+      color: transparent !important;
+      border-color: var(--chatcloak-blackout-color, #0b0f19) !important;
+      border-radius: 6px !important;
+      text-shadow: none !important;
+      user-select: none !important;
+    }
+    :host-context(html.chatcloak-enabled.chatcloak-style-blackout) [data-chatcloak-cloaked] * {
+      color: transparent !important;
+      background-color: transparent !important;
+      border-color: transparent !important;
+      text-shadow: none !important;
+    }
+    :host-context(html.chatcloak-enabled.chatcloak-style-blackout) [data-chatcloak-cloaked] img,
+    :host-context(html.chatcloak-enabled.chatcloak-style-blackout) [data-chatcloak-cloaked] svg,
+    :host-context(html.chatcloak-enabled.chatcloak-style-blackout) img[data-chatcloak-cloaked] {
+      filter: brightness(0) !important;
+    }
+    [data-chatcloak-redacted="true"] {
+      display: inline !important;
+      border-radius: 4px !important;
+      padding: 0 2px !important;
+      user-select: none !important;
+    }
+    :host-context(html.chatcloak-enabled.chatcloak-peek-enabled.chatcloak-alt-held) [data-chatcloak-cloaked]:hover,
+    :host-context(html.chatcloak-enabled.chatcloak-peek-enabled.chatcloak-alt-held) [data-chatcloak-redacted="true"]:hover {
+      filter: none !important;
+      background-color: transparent !important;
+      color: inherit !important;
+    }
+    :host-context(html.chatcloak-enabled.chatcloak-peek-enabled.chatcloak-alt-held) [data-chatcloak-cloaked]:hover * {
+      color: inherit !important;
+      filter: none !important;
+    }
+  `;
+
   // Maps an original anchor Text node to the extra nodes created by splitText()
   let splitArtifacts = new WeakMap();
   // Maps a Text node to `${rulesSignature}\n${nodeValue}` to avoid redundant regex work
@@ -27,49 +75,87 @@
     return cachedCustomRegex;
   }
 
-  const GREETING_CONTAINER_SELECTOR =
-    'h1, h2, [role="heading"], [data-testid*="greeting" i], [data-test-id*="greeting" i], modular-greeting, bard-greeting';
-
-  function computeRulesSignature(settings) {
+  function computeRulesSignature(adapter, settings) {
+    const siteId = adapter ? adapter.id : 'none';
     const pii = settings.categories && settings.categories.pii ? '1' : '0';
     const profile = settings.categories && settings.categories.profile ? '1' : '0';
     const ci = settings.caseInsensitive !== false ? 'i' : 's';
     const kw = JSON.stringify(settings.customKeywords || []);
-    return `${pii}:${profile}:${ci}:${kw}`;
+    return `${siteId}:${pii}:${profile}:${ci}:${kw}`;
   }
 
-  function safeQueryAll(root, selectors) {
-    if (!root || !Array.isArray(selectors) || selectors.length === 0) return [];
+  function queryAllInAdapter(adapter, root, selectors) {
+    if (adapter && typeof adapter.queryAll === 'function') {
+      return adapter.queryAll(root, selectors);
+    }
     const results = new Set();
     for (const selector of selectors) {
       try {
         const list = root.querySelectorAll(selector);
-        for (const el of list) {
-          results.add(el);
-        }
+        for (const el of list) results.add(el);
       } catch (_) {
-        // Ignore individual selectors unsupported by a given DOM state
+        // Ignore invalid selector
       }
     }
     return Array.from(results);
   }
 
-  function clearCategoryCloaks(category) {
-    const els = document.querySelectorAll(`[data-chatcloak-cloaked="${category}"]`);
+  function ensureShadowStyles(adapter) {
+    if (!adapter || !adapter.supportsShadowDom) return;
+    const roots = adapter.collectRoots(document);
+    for (const r of roots) {
+      if (r === document || !(r instanceof ShadowRoot)) continue;
+      if (!r.querySelector('style[data-chatcloak-shadow-style="true"]')) {
+        const styleEl = document.createElement('style');
+        styleEl.setAttribute('data-chatcloak-ignore', 'true');
+        styleEl.setAttribute('data-chatcloak-shadow-style', 'true');
+        styleEl.textContent = SHADOW_CSS;
+        r.appendChild(styleEl);
+      }
+    }
+  }
+
+  function clearShadowStyles(adapter) {
+    if (!adapter || !adapter.supportsShadowDom) return;
+    const roots = adapter.collectRoots(document);
+    for (const r of roots) {
+      if (r === document || !(r instanceof ShadowRoot)) continue;
+      const styles = r.querySelectorAll('style[data-chatcloak-shadow-style="true"]');
+      for (const s of styles) {
+        s.remove();
+      }
+    }
+  }
+
+  function clearCategoryCloaks(adapter, category) {
+    const els = queryAllInAdapter(adapter, document, [
+      `[data-chatcloak-cloaked="${category}"]`
+    ]);
     for (const el of els) {
       el.removeAttribute('data-chatcloak-cloaked');
     }
   }
 
-  function applyCategoryCloaks(adapter, settings) {
+  function clearAllCloaks(adapter) {
+    const els = queryAllInAdapter(adapter, document, ['[data-chatcloak-cloaked]']);
+    for (const el of els) {
+      el.removeAttribute('data-chatcloak-cloaked');
+      el.removeAttribute('data-chatcloak-manual');
+    }
+    clearShadowStyles(adapter);
+  }
+
+  function applyCategoryCloaks(adapter, settings, effectiveEnabled) {
     const categories = settings.categories || {};
 
-    if (!settings.enabled) {
-      clearCategoryCloaks('sidebar');
-      clearCategoryCloaks('profile');
-      clearCategoryCloaks('media');
+    if (!effectiveEnabled) {
+      clearCategoryCloaks(adapter, 'sidebar');
+      clearCategoryCloaks(adapter, 'profile');
+      clearCategoryCloaks(adapter, 'media');
       return;
     }
+
+    ensureShadowStyles(adapter);
 
     const mapping = [
       ['sidebar', Boolean(categories.sidebar), adapter.getSidebarSelectors()],
@@ -79,14 +165,22 @@
 
     for (const [catName, active, selectors] of mapping) {
       if (!active) {
-        clearCategoryCloaks(catName);
+        clearCategoryCloaks(adapter, catName);
         continue;
       }
 
-      const matched = new Set(safeQueryAll(document, selectors));
+      const matched = new Set(queryAllInAdapter(adapter, document, selectors));
+      if (typeof adapter.getExtraCloakElements === 'function') {
+        for (const extraEl of adapter.getExtraCloakElements(catName)) {
+          if (extraEl && extraEl.nodeType === Node.ELEMENT_NODE) {
+            matched.add(extraEl);
+          }
+        }
+      }
 
-      // Remove stale attributes on nodes that no longer match
-      const existing = document.querySelectorAll(`[data-chatcloak-cloaked="${catName}"]`);
+      const existing = queryAllInAdapter(adapter, document, [
+        `[data-chatcloak-cloaked="${catName}"]`
+      ]);
       for (const el of existing) {
         if (!matched.has(el)) {
           el.removeAttribute('data-chatcloak-cloaked');
@@ -96,7 +190,6 @@
       for (const el of matched) {
         if (el.closest('[data-chatcloak-ignore="true"]')) continue;
         if (el.getAttribute('data-chatcloak-manual') === 'true') continue;
-        // Skip tiny UI icons when cloaking media
         if (catName === 'media' && el.tagName === 'IMG') {
           const rect = el.getBoundingClientRect();
           if (rect.width > 0 && rect.width <= 24 && rect.height > 0 && rect.height <= 24) {
@@ -124,6 +217,9 @@
     if (!adapter) return false;
     const el = node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
     if (!el) return false;
+    if (typeof adapter.matchesAny === 'function') {
+      return adapter.matchesAny(el, adapter.getMessageContainerSelectors());
+    }
     const selectors = adapter.getMessageContainerSelectors();
     for (const sel of selectors) {
       try {
@@ -148,8 +244,6 @@
 
   function applyMatchesToTextNode(textNode, matches) {
     const artifacts = [];
-    // Process backwards so earlier offsets remain valid across splitText() calls.
-    // textNode itself stays as a direct child of its parent to preserve React/Angular node refs.
     for (let i = matches.length - 1; i >= 0; i--) {
       const m = matches[i];
       if (m.start < 0 || m.end > textNode.nodeValue.length || m.start >= m.end) {
@@ -195,6 +289,10 @@
     const enablePii = Boolean(settings.categories && settings.categories.pii);
     const enableProfile = Boolean(settings.categories && settings.categories.profile);
     const customRegex = getCustomRegex(settings);
+    const extraPatterns =
+      !inMessage && enableProfile && adapter && typeof adapter.getProfileTextPatterns === 'function'
+        ? adapter.getProfileTextPatterns()
+        : null;
 
     const matchOptions = inMessage
       ? { enablePii, customRegex }
@@ -202,6 +300,7 @@
           enablePii: false,
           enableEmail: enableProfile || enablePii,
           enableProfileIdentity: enableProfile,
+          extraPatterns,
           customRegex
         };
 
@@ -209,6 +308,7 @@
       !matchOptions.enablePii &&
       !matchOptions.enableEmail &&
       !matchOptions.enableProfileIdentity &&
+      !(matchOptions.extraPatterns && matchOptions.extraPatterns.length > 0) &&
       !matchOptions.customRegex
     ) {
       processedTextCache.set(textNode, signature);
@@ -245,7 +345,6 @@
     });
 
     if (matches.length > 0) {
-      // Map character ranges across child Text nodes in case greeting & name live in separate spans
       const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
         acceptNode(node) {
           if (!node || !node.nodeValue) return NodeFilter.FILTER_REJECT;
@@ -286,11 +385,8 @@
     el.setAttribute('data-chatcloak-processed', 'true');
   }
 
-  function walkAndRedact(rootElement, settings, adapter) {
-    if (!rootElement || rootElement.nodeType !== Node.ELEMENT_NODE) return;
-    if (rootElement.closest(FORBIDDEN_TAG_SELECTOR)) return;
-
-    const walker = document.createTreeWalker(rootElement, NodeFilter.SHOW_TEXT, {
+  function walkSingleRoot(rootNode, settings, adapter) {
+    const walker = document.createTreeWalker(rootNode, NodeFilter.SHOW_TEXT, {
       acceptNode(node) {
         return isSafeTextNode(node)
           ? NodeFilter.FILTER_ACCEPT
@@ -309,27 +405,47 @@
     }
 
     if (settings.categories && settings.categories.profile) {
-      if (rootElement.matches && rootElement.matches(GREETING_CONTAINER_SELECTOR)) {
-        redactSplitGreetingElement(rootElement, settings, adapter);
+      if (
+        rootNode.nodeType === Node.ELEMENT_NODE &&
+        rootNode.matches &&
+        rootNode.matches(GREETING_CONTAINER_SELECTOR)
+      ) {
+        redactSplitGreetingElement(rootNode, settings, adapter);
       }
-      const greetingEls = rootElement.querySelectorAll(GREETING_CONTAINER_SELECTOR);
-      for (const gEl of greetingEls) {
-        redactSplitGreetingElement(gEl, settings, adapter);
+      if (typeof rootNode.querySelectorAll === 'function') {
+        const greetingEls = rootNode.querySelectorAll(GREETING_CONTAINER_SELECTOR);
+        for (const gEl of greetingEls) {
+          redactSplitGreetingElement(gEl, settings, adapter);
+        }
       }
     }
   }
 
+  function walkAndRedact(rootElement, settings, adapter) {
+    if (!rootElement) return;
+    if (rootElement.nodeType === Node.ELEMENT_NODE && rootElement.closest(FORBIDDEN_TAG_SELECTOR)) {
+      return;
+    }
+
+    if (adapter && adapter.supportsShadowDom && typeof adapter.collectRoots === 'function') {
+      const roots = adapter.collectRoots(rootElement);
+      for (const r of roots) {
+        walkSingleRoot(r, settings, adapter);
+      }
+      return;
+    }
+
+    walkSingleRoot(rootElement, settings, adapter);
+  }
+
   function findMessageRoots(adapter) {
     const selectors = adapter.getMessageContainerSelectors();
-    const matched = safeQueryAll(document, selectors);
+    const matched = queryAllInAdapter(adapter, document, selectors);
     if (matched.length > 0) {
-      // Filter out containers that are nested inside another matched container
       return matched.filter(
         (el) => !matched.some((other) => other !== el && other.contains(el))
       );
     }
-
-    // Fallback to <main> if a platform changes message container markup
     const main = document.querySelector('main');
     return main ? [main] : [];
   }
@@ -337,19 +453,12 @@
   function isInsideMessageRoot(node, adapter) {
     const el = node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
     if (!el) return false;
-    const selectors = adapter.getMessageContainerSelectors();
-    for (const sel of selectors) {
-      try {
-        if (el.matches(sel) || el.closest(sel)) return true;
-      } catch (_) {
-        // Ignore invalid selector
-      }
-    }
+    if (isInsideStrictMessageContainer(el, adapter)) return true;
     return Boolean(el.closest('main'));
   }
 
-  function restoreAllTextRedactions() {
-    const spans = document.querySelectorAll('[data-chatcloak-redacted="true"]');
+  function restoreAllTextRedactions(adapter) {
+    const spans = queryAllInAdapter(adapter, document, ['[data-chatcloak-redacted="true"]']);
     const touchedParents = new Set();
 
     for (const span of spans) {
@@ -371,7 +480,7 @@
       }
     }
 
-    const processed = document.querySelectorAll('[data-chatcloak-processed]');
+    const processed = queryAllInAdapter(adapter, document, ['[data-chatcloak-processed]']);
     for (const el of processed) {
       el.removeAttribute('data-chatcloak-processed');
     }
@@ -380,25 +489,25 @@
     processedTextCache = new WeakMap();
   }
 
-  function applyFullRedaction(adapter, settings) {
-    applyCategoryCloaks(adapter, settings);
+  function applyFullRedaction(adapter, settings, effectiveEnabled = settings.enabled) {
+    applyCategoryCloaks(adapter, settings, effectiveEnabled);
 
-    const nextSig = computeRulesSignature(settings);
+    const nextSig = computeRulesSignature(adapter, settings);
     const categories = settings.categories || {};
     const shouldRedactText =
-      settings.enabled &&
+      effectiveEnabled &&
       (Boolean(categories.pii) ||
         Boolean(categories.profile) ||
         (settings.customKeywords && settings.customKeywords.length > 0));
 
     if (!shouldRedactText) {
-      restoreAllTextRedactions();
+      restoreAllTextRedactions(adapter);
       currentRulesSignature = nextSig;
       return;
     }
 
     if (nextSig !== currentRulesSignature) {
-      restoreAllTextRedactions();
+      restoreAllTextRedactions(adapter);
       currentRulesSignature = nextSig;
     }
 
@@ -412,23 +521,28 @@
     }
   }
 
-  function applyIncrementalNodes(adapter, settings, mutatedNodes, mutatedTextNodes) {
-    applyCategoryCloaks(adapter, settings);
+  function applyIncrementalNodes(
+    adapter,
+    settings,
+    mutatedNodes,
+    mutatedTextNodes,
+    effectiveEnabled = settings.enabled
+  ) {
+    applyCategoryCloaks(adapter, settings, effectiveEnabled);
 
     const categories = settings.categories || {};
     const shouldRedactText =
-      settings.enabled &&
+      effectiveEnabled &&
       (Boolean(categories.pii) ||
         Boolean(categories.profile) ||
         (settings.customKeywords && settings.customKeywords.length > 0));
 
     if (!shouldRedactText) return;
 
-    currentRulesSignature = computeRulesSignature(settings);
+    currentRulesSignature = computeRulesSignature(adapter, settings);
 
     for (const textNode of mutatedTextNodes) {
       if (!textNode.isConnected) continue;
-      // If React/Angular updated the anchor text node during streaming, clear stale split spans first
       if (splitArtifacts.has(textNode)) {
         cleanupSplitArtifacts(textNode);
       }
@@ -448,6 +562,7 @@
   window.ChatCloakRedactor = {
     applyFullRedaction,
     applyIncrementalNodes,
-    restoreAllTextRedactions
+    restoreAllTextRedactions,
+    clearAllCloaks
   };
 })();

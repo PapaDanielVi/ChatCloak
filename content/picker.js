@@ -105,9 +105,21 @@
     highlightEl.style.height = `${rect.height}px`;
   }
 
+  function getEventTarget(e) {
+    if (typeof e.composedPath === 'function') {
+      const path = e.composedPath();
+      for (const node of path) {
+        if (node && node.nodeType === Node.ELEMENT_NODE) {
+          return node;
+        }
+      }
+    }
+    return e.target;
+  }
+
   function onMouseMove(e) {
     if (!active) return;
-    pendingTarget = resolvePickableTarget(e.target);
+    pendingTarget = resolvePickableTarget(getEventTarget(e));
     if (rafId !== null) return;
     rafId = window.requestAnimationFrame(() => {
       rafId = null;
@@ -117,14 +129,15 @@
 
   function onClick(e) {
     if (!active) return;
-    if (e.target && e.target.closest && e.target.closest('#chatcloak-picker-hud')) {
+    const rawTarget = getEventTarget(e);
+    if (rawTarget && rawTarget.closest && rawTarget.closest('#chatcloak-picker-hud')) {
       return;
     }
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
 
-    const target = resolvePickableTarget(e.target);
+    const target = resolvePickableTarget(rawTarget);
     if (!target) return;
 
     // Toggle manual cloak if user clicks an already-manually-cloaked element
@@ -188,8 +201,11 @@
     }
   }
 
-  function clearManualCloaks() {
-    const els = document.querySelectorAll('[data-chatcloak-manual="true"]');
+  function clearManualCloaks(adapter) {
+    const els =
+      adapter && typeof adapter.queryAll === 'function'
+        ? adapter.queryAll(document, ['[data-chatcloak-manual="true"]'])
+        : Array.from(document.querySelectorAll('[data-chatcloak-manual="true"]'));
     for (const el of els) {
       el.removeAttribute('data-chatcloak-manual');
       if (el.getAttribute('data-chatcloak-cloaked') === 'manual') {

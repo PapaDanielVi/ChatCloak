@@ -1,15 +1,16 @@
 (() => {
   'use strict';
 
-  window.ChatCloakAdapters = window.ChatCloakAdapters || [];
+  const BaseAdapter = window.ChatCloakBaseAdapter;
 
-  const geminiAdapter = {
-    id: 'gemini',
-    label: 'Google Gemini',
-
-    matches(hostname) {
-      return hostname === 'gemini.google.com';
-    },
+  class GeminiAdapter extends BaseAdapter {
+    constructor() {
+      super({
+        id: 'gemini',
+        displayName: 'Google Gemini',
+        hostPatterns: ['gemini.google.com']
+      });
+    }
 
     getSidebarSelectors() {
       return [
@@ -27,7 +28,7 @@
         '[data-test-id="location-info"]',
         '[data-test-id="conversation-title"]'
       ];
-    },
+    }
 
     getProfileSelectors() {
       return [
@@ -43,7 +44,7 @@
         'modular-greeting',
         '[data-test-id*="greeting" i]'
       ];
-    },
+    }
 
     getMediaSelectors() {
       return [
@@ -57,7 +58,7 @@
         '[data-test-id="uploaded-file"]',
         '[data-test-id="image-preview"]'
       ];
-    },
+    }
 
     getMessageContainerSelectors() {
       return [
@@ -69,7 +70,7 @@
         '.conversation-container'
       ];
     }
-  };
+  }
 
-  window.ChatCloakAdapters.push(geminiAdapter);
+  window.ChatCloakAdapters.push(new GeminiAdapter());
 })();

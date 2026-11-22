@@ -229,6 +229,20 @@
       collectGreetingMatches(text, BUILTIN_PATTERNS.length, candidates);
     }
 
+    if (Array.isArray(opts.extraPatterns) && opts.extraPatterns.length > 0) {
+      opts.extraPatterns.forEach((pattern, idx) => {
+        if (!pattern || !pattern.regex) return;
+        collectRegexMatches(
+          text,
+          pattern.regex,
+          pattern.category || 'profile',
+          BUILTIN_PATTERNS.length + PROFILE_GREETING_PATTERNS.length + idx,
+          pattern.validate || null,
+          candidates
+        );
+      });
+    }
+
     const customRegex =
       opts.customRegex ||
       buildCustomKeywordRegex(opts.customKeywords, opts.caseInsensitive !== false);
@@ -237,7 +251,7 @@
         text,
         customRegex,
         'keyword',
-        BUILTIN_PATTERNS.length + PROFILE_GREETING_PATTERNS.length,
+        BUILTIN_PATTERNS.length + PROFILE_GREETING_PATTERNS.length + 10,
         null,
         candidates
       );
